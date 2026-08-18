@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Password Strength Analyzer</title>
+    <style>
+         :root {
+            --ink: #141a24;
+            --ink-2: #1b2330;
+            --card: #1f2836;
+            --line: rgba(233, 227, 212, 0.12);
+            --line-strong: rgba(233, 227, 212, 0.22);
+            --paper: #e9e3d4;
+            --paper-dim: #a9a290;
+            --brass: #c99a4b;
+            --brass-light: #e3bc7a;
+            --danger: #d0605a;
+            --warn: #d3963f;
+            --ok-mid: #c9b23a;
+            --ok: #7fae5c;
+            --ok-strong: #4f9d6e;
+            --mono: 'Courier New', Courier, monospace;
+            --serif: Georgia, 'Times New Roman', serif;
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            margin: 0;
+            background: radial-gradient(circle at 20% -10%, #202a3a 0%, transparent 45%), var(--ink);
+            color: var(--paper);
+            font-family: var(--serif);
+            padding: 48px 20px 80px;
+            min-height: 100vh;
+        }
+        
+        .wrap {
+            max-width: 680px;
+            margin: 0 auto;
+        }
+        
+        .eyebrow {
+            font-family: var(--mono);
+            font-size: 12px;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: var(--brass-light);
+            margin: 0 0 10px;
+        }
+        
+        h1 {
+            font-family: var(--serif);
+            font-weight: 700;
+            font-size: 34px;
+            line-height: 1.15;
+            margin: 0 0 10px;
+            color: var(--paper);
+        }
+        
+        .lede {
+            color: var(--paper-dim);
+            font-size: 15px;
+            line-height: 1.6;
+            margin: 0 0 36px;
+            max-width: 52ch;
+        }
+        
+        .card {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            padding: 28px 28px 30px;
+            margin-bottom: 22px;
+        }
+        
+        label {
+            display: block;
+            font-family: var(--mono);
+            font-size: 11px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--paper-dim);
+            margin-bottom: 10px;
+        }
+        
+        .field-row {
+            display: flex;
+            gap: 10px;
+        }
+        
+        input[type=text],
+        input[type=password] {
+            flex: 1;
+            background: var(--ink-2);
+            border: 1px solid var(--line-strong);
+            color: var(--paper);
+            font-family: var(--mono);
+            font-size: 16px;
+            padding: 12px 14px;
+            border-radius: 4px;
+            outline: none;
+            letter-spacing: 0.03em;
+        }
+        
+        input[type=text]:focus,
+        input[type=password]:focus {
+            border-color: var(--brass);
+            box-shadow: 0 0 0 2px rgba(201, 154, 75, 0.18);
+        }
+        
+        button {
+            font-family: var(--mono);
+            font-size: 12px;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            background: transparent;
+            color: var(--paper);
+            border: 1px solid var(--line-strong);
+            border-radius: 4px;
+            padding: 0 16px;
+            cursor: pointer;
+            transition: border-color 0.15s ease, color 0.15s ease;
+        }
+        
+        button:hover {
+            border-color: var(--brass);
+            color: var(--brass-light);
+        }
+        /* Dial */
+        
+        .dial-row {
+            display: flex;
+            align-items: center;
+            gap: 28px;
+            margin-top: 26px;
+            flex-wrap: wrap;
+        }
+        
+        .dial-wrap {
+            position: relative;
+            width: 200px;
+            height: 116px;
+            flex-shrink: 0;
+        }
+        
+        .dial-readout {
+            flex: 1;
+            min-width: 180px;
+        }
+        
+        .verdict {
+            font-family: var(--serif);
+            font-weight: 700;
+            font-size: 22px;
+            margin: 0 0 6px;
+        }
+        
+        .crack-time {
+            font-family: var(--mono);
+            font-size: 13px;
+            color: var(--paper-dim);
+        }
+        
+        .crack-time b {
+            color: var(--paper);
+            font-weight: 700;
+        }
+        /* Checklist */
+        
+        .checks {
+            list-style: none;
+            margin: 22px 0 0;
+            padding: 0;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px 18px;
+        }
+        
+        .checks li {
+            font-family: var(--mono);
+            font-size: 12.5px;
+            color: var(--paper-dim);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .checks li.pass {
+            color: var(--paper);
+        }
+        
+        .mark {
+            width: 14px;
+            height: 14px;
+            flex-shrink: 0;
+            border-radius: 50%;
+            border: 1px solid var(--line-strong);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            line-height: 1;
+        }
+        
+        .checks li.pass .mark {
+            border-color: var(--ok-strong);
+            color: var(--ok-strong);
+        }
+        
+        .checks li.fail .mark {
+            color: transparent;
+        }
+        
+        .flag {
+            margin-top: 18px;
+            padding: 10px 14px;
+            border-radius: 4px;
+            font-family: var(--mono);
+            font-size: 12.5px;
+            display: none;
+            border: 1px solid rgba(208, 96, 90, 0.4);
+            background: rgba(208, 96, 90, 0.08);
+            color: #eab3af;
+        }
+        
+        .flag.show {
+            display: block;
+        }
+        
+        h2 {
+            font-family: var(--serif);
+            font-size: 17px;
+            margin: 0 0 4px;
+            color: var(--paper);
+        }
+        
+        .section-sub {
+            font-family: var(--mono);
+            font-size: 11.5px;
+            color: var(--paper-dim);
+            margin: 0 0 18px;
+        }
+        
+        .alt-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .alt {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--ink-2);
+            border: 1px solid var(--line);
+            border-radius: 4px;
+            padding: 10px 12px;
+        }
+        
+        .alt code {
+            font-family: var(--mono);
+            font-size: 14.5px;
+            color: var(--brass-light);
+            letter-spacing: 0.02em;
+        }
+        
+        .alt button {
+            padding: 5px 10px;
+            font-size: 11px;
+        }
+        
+        .copied {
+            color: var(--ok-strong) !important;
+            border-color: var(--ok-strong) !important;
+        }
+        
+        footer {
+            text-align: center;
+            font-family: var(--mono);
+            font-size: 11px;
+            color: var(--paper-dim);
+            letter-spacing: 0.05em;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrap">
+
+        <p class="eyebrow">Assignment 1 — Cryptography &amp; Password Security</p>
+        <h1>Password strength analyzer</h1>
+        <p class="lede">Type a password below to see its length, complexity, and uniqueness scored live, along with an estimated offline crack time and stronger alternatives.</p>
+
+        <div class="card">
+            <label for="pw">Enter a password to test</label>
+            <div class="field-row">
+                <input type="password" id="pw" placeholder="Type a password..." autocomplete="off" spellcheck="false">
+                <button id="toggle" type="button">Show</button>
+            </div>
+
+            <div class="flag" id="reuse-flag">This password appears on public breach/common-password lists — treat it as already compromised.</div>
+
+            <div class="dial-row">
+                <div class="dial-wrap">
+                    <svg viewBox="0 0 200 116" width="200" height="116">
+          <path d="M 14 106 A 86 86 0 0 1 186 106" fill="none" stroke="#2a3444" stroke-width="14" stroke-linecap="round"/>
+          <path id="arc" d="M 14 106 A 86 86 0 0 1 186 106" fill="none" stroke="#3b4658" stroke-width="14" stroke-linecap="round" stroke-dasharray="270 270" stroke-dashoffset="270"/>
+          <line id="needle" x1="100" y1="106" x2="100" y2="34" stroke="#e9e3d4" stroke-width="2.5" stroke-linecap="round" style="transform-origin: 100px 106px; transform: rotate(-90deg); transition: transform 0.35s cubic-bezier(.4,1.4,.5,1);"/>
+          <circle cx="100" cy="106" r="6" fill="#c99a4b"/>
+        </svg>
+                </div>
+                <div class="dial-readout">
+                    <p class="verdict" id="verdict" style="color:var(--paper-dim);">Awaiting input</p>
+                    <p class="crack-time" id="crack">Estimated crack time: <b>—</b></p>
+                </div>
+            </div>
+
+            <ul class="checks" id="checks">
+                <li class="fail" data-k="len"><span class="mark">✓</span>At least 12 characters</li>
+                <li class="fail" data-k="upper"><span class="mark">✓</span>Contains uppercase letter</li>
+                <li class="fail" data-k="lower"><span class="mark">✓</span>Contains lowercase letter</li>
+                <li class="fail" data-k="digit"><span class="mark">✓</span>Contains a number</li>
+                <li class="fail" data-k="symbol"><span class="mark">✓</span>Contains a symbol</li>
+                <li class="fail" data-k="unique"><span class="mark">✓</span>Not a common/breached password</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h2>Stronger alternatives</h2>
+            <p class="section-sub">Generated fresh, unrelated to what you typed above</p>
+            <div class="alt-list" id="alts"></div>
+            <div style="margin-top:14px;">
+                <button id="regen" type="button">Generate new alternatives</button>
+            </div>
+        </div>
+
+        <footer>All checks run locally in this page — nothing is stored or sent anywhere.</footer>
+    </div>
+
+    <script>
+        var COMMON = ["123456", "password", "12345678", "qwerty", "123456789", "12345", "1234", "111111",
+            "1234567", "dragon", "123123", "baseball", "abc123", "football", "monkey", "letmein", "696969",
+            "shadow", "master", "666666", "qwertyuiop", "123321", "mustang", "1234567890", "michael",
+            "654321", "superman", "1qaz2wsx", "7777777", "121212", "000000", "qazwsx", "123qwe",
+            "password1", "iloveyou", "welcome", "admin", "login", "princess", "solo", "starwars",
+            "passw0rd", "freedom", "whatever", "trustno1", "hello", "charlie", "donald", "hannah",
+            "summer", "winter", "flower", "sunshine", "access", "batman", "hockey", "killer",
+            "george", "harley", "ranger", "jordan", "tigger", "cookie", "asshole", "fuckyou"
+        ];
+
+        var WORDS = ["cobalt", "harbor", "lantern", "tundra", "velvet", "copper", "meadow", "granite",
+            "willow", "ember", "cinder", "marble", "quartz", "hollow", "thicket", "ridge", "canyon",
+            "orchard", "falcon", "otter", "cedar", "basil", "saffron", "pepper", "juniper"
+        ];
+
+        function analyze(pw) {
+            var checks = {
+                len: pw.length >= 12,
+                upper: /[A-Z]/.test(pw),
+                lower: /[a-z]/.test(pw),
+                digit: /[0-9]/.test(pw),
+                symbol: /[^A-Za-z0-9]/.test(pw),
+                unique: pw.length > 0 && COMMON.indexOf(pw.toLowerCase()) === -1
+            };
+            var passed = 0;
+            for (var k in checks) {
+                if (checks[k]) passed++;
+            }
+
+            var charspace = 0;
+            if (checks.lower) charspace += 26;
+            if (checks.upper) charspace += 26;
+            if (checks.digit) charspace += 10;
+            if (checks.symbol) charspace += 32;
+            if (charspace === 0) charspace = 1;
+
+            var entropyBits = pw.length * Math.log2(charspace);
+            if (!checks.unique) entropyBits = Math.min(entropyBits, 10);
+
+            var guesses = Math.pow(2, entropyBits);
+            var guessesPerSecond = 1e10;
+            var seconds = guesses / guessesPerSecond / 2;
+
+            return {
+                checks: checks,
+                passed: passed,
+                entropyBits: entropyBits,
+                seconds: seconds
+            };
+        }
+
+        function formatCrackTime(seconds) {
+            if (seconds < 1) return "instantly";
+            var units = [
+                ["century", 60 * 60 * 24 * 365 * 100],
+                ["year", 60 * 60 * 24 * 365],
+                ["day", 60 * 60 * 24],
+                ["hour", 60 * 60],
+                ["minute", 60],
+                ["second", 1]
+            ];
+            for (var i = 0; i < units.length; i++) {
+                var val = seconds / units[i][1];
+                if (val >= 1) {
+                    var rounded = val >= 100 ? Math.round(val).toLocaleString() : val.toFixed(1);
+                    return rounded + " " + units[i][0] + (val >= 2 ? "s" : "");
+                }
+            }
+            return "instantly";
+        }
+
+        function scoreToLabel(entropyBits, unique) {
+            if (!unique) return {
+                label: "Compromised",
+                color: "var(--danger)",
+                frac: 0.06
+            };
+            if (entropyBits < 28) return {
+                label: "Very weak",
+                color: "var(--danger)",
+                frac: 0.12
+            };
+            if (entropyBits < 40) return {
+                label: "Weak",
+                color: "var(--warn)",
+                frac: 0.32
+            };
+            if (entropyBits < 60) return {
+                label: "Fair",
+                color: "var(--ok-mid)",
+                frac: 0.55
+            };
+            if (entropyBits < 80) return {
+                label: "Strong",
+                color: "var(--ok)",
+                frac: 0.78
+            };
+            return {
+                label: "Very strong",
+                color: "var(--ok-strong)",
+                frac: 0.96
+            };
+        }
+
+        var pwInput = document.getElementById('pw');
+        var toggle = document.getElementById('toggle');
+        var needle = document.getElementById('needle');
+        var arc = document.getElementById('arc');
+        var verdict = document.getElementById('verdict');
+        var crack = document.getElementById('crack');
+        var reuseFlag = document.getElementById('reuse-flag');
+
+        function render() {
+            var pw = pwInput.value;
+            if (pw.length === 0) {
+                verdict.textContent = "Awaiting input";
+                verdict.style.color = "var(--paper-dim)";
+                crack.innerHTML = "Estimated crack time: <b>—</b>";
+                needle.style.transform = "rotate(-90deg)";
+                arc.setAttribute('stroke-dashoffset', 270);
+                arc.setAttribute('stroke', '#3b4658');
+                reuseFlag.classList.remove('show');
+                document.querySelectorAll('#checks li').forEach(function(li) {
+                    li.className = 'fail';
+                });
+                return;
+            }
+
+            var result = analyze(pw);
+            var scored = scoreToLabel(result.entropyBits, result.checks.unique);
+
+            verdict.textContent = scored.label;
+            verdict.style.color = scored.color;
+            crack.innerHTML = "Estimated crack time: <b>" + formatCrackTime(result.seconds) + "</b>";
+
+            var angle = -90 + (scored.frac * 180);
+            needle.style.transform = "rotate(" + angle + "deg)";
+            var offset = 270 - (270 * scored.frac);
+            arc.setAttribute('stroke-dashoffset', offset);
+            arc.setAttribute('stroke', scored.color);
+
+            reuseFlag.classList.toggle('show', !result.checks.unique);
+
+            for (var k in result.checks) {
+                var li = document.querySelector('#checks li[data-k="' + k + '"]');
+                li.className = result.checks[k] ? 'pass' : 'fail';
+            }
+        }
+
+        pwInput.addEventListener('input', render);
+
+        toggle.addEventListener('click', function() {
+            if (pwInput.type === 'password') {
+                pwInput.type = 'text';
+                toggle.textContent = 'Hide';
+            } else {
+                pwInput.type = 'password';
+                toggle.textContent = 'Show';
+            }
+        });
+
+        function randInt(max) {
+            return Math.floor(Math.random() * max);
+        }
+
+        function randSymbol() {
+            var symbols = "!@#$%&*?-_+=";
+            return symbols[randInt(symbols.length)];
+        }
+
+        function cap(word) {
+            return word.charAt(0).toUpperCase() + word.slice(1);
+        }
+
+        function generateAlternative() {
+            var w1 = WORDS[randInt(WORDS.length)];
+            var w2 = WORDS[randInt(WORDS.length)];
+            while (w2 === w1) {
+                w2 = WORDS[randInt(WORDS.length)];
+            }
+            var num = randInt(90) + 10;
+            return cap(w1) + randSymbol() + cap(w2) + num;
+        }
+
+        var altsContainer = document.getElementById('alts');
+
+        function renderAlts() {
+            altsContainer.innerHTML = '';
+            for (var i = 0; i < 3; i++) {
+                var pw = generateAlternative();
+                var row = document.createElement('div');
+                row.className = 'alt';
+                var code = document.createElement('code');
+                code.textContent = pw;
+                var btn = document.createElement('button');
+                btn.type = 'button';
+                btn.textContent = 'Copy';
+                btn.addEventListener('click', function(pwVal, btnEl) {
+                    return function() {
+                        navigator.clipboard.writeText(pwVal).then(function() {
+                            var original = btnEl.textContent;
+                            btnEl.textContent = 'Copied';
+                            btnEl.classList.add('copied');
+                            setTimeout(function() {
+                                btnEl.textContent = original;
+                                btnEl.classList.remove('copied');
+                            }, 1200);
+                        });
+                    };
+                }(pw, btn));
+                row.appendChild(code);
+                row.appendChild(btn);
+                altsContainer.appendChild(row);
+            }
+        }
+
+        document.getElementById('regen').addEventListener('click', renderAlts);
+
+        render();
+        renderAlts();
+    </script>
+</body>
+
+</html>
