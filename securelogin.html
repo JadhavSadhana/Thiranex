@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vault — Secure Access</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #10151f;
+    --panel: #161d2b;
+    --paper: #f4f5f7;
+    --paper-dim: #d8dbe1;
+    --line: #2a3346;
+    --mint: #4fd1a5;
+    --mint-dim: #2e8b6b;
+    --rust: #e2665b;
+    --text-on-dark: #eef0f4;
+    --text-dim-on-dark: #9aa4b8;
+    --text-on-paper: #171a20;
+    --text-dim-on-paper: #666d7c;
+    --radius: 3px;
+    --font-display: 'Space Grotesk', system-ui, sans-serif;
+    --font-body: 'IBM Plex Sans', system-ui, sans-serif;
+    --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--ink);
+    font-family: var(--font-body);
+    color: var(--text-on-paper);
+    padding: 32px 20px;
+  }
+
+  .card {
+    width: 100%;
+    max-width: 840px;
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    background: var(--paper);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: 0 40px 80px -30px rgba(0,0,0,0.6);
+    animation: rise 500ms cubic-bezier(.2,.8,.2,1) both;
+  }
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (max-width: 640px) {
+    .card { grid-template-columns: 1fr; }
+    .aside { display: none; }
+  }
+
+  /* ---------- Left panel ---------- */
+  .aside {
+    background: var(--panel);
+    color: var(--text-on-dark);
+    padding: 40px 32px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+  }
+
+  .seal {
+    width: 56px;
+    height: 56px;
+  }
+  .seal circle { stroke: var(--mint); }
+  .seal path { stroke: var(--mint); }
+
+  .aside h1 {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 600;
+    line-height: 1.25;
+    margin: 28px 0 12px;
+    letter-spacing: -0.01em;
+  }
+
+  .aside p {
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--text-dim-on-dark);
+    max-width: 30ch;
+  }
+
+  .checklist {
+    list-style: none;
+    padding: 0;
+    margin: 28px 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .checklist li {
+    font-size: 0.8rem;
+    color: var(--text-dim-on-dark);
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+  .checklist li::before {
+    content: '';
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--mint);
+    flex-shrink: 0;
+    transform: translateY(-2px);
+  }
+
+  .session-tag {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--mint);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 6px 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    width: fit-content;
+  }
+  .session-tag .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--text-dim-on-dark);
+  }
+  .session-tag.live .dot { background: var(--mint); }
+
+  /* ---------- Right panel ---------- */
+  .main { padding: 40px 36px; display: flex; flex-direction: column; }
+
+  .tabs {
+    display: flex;
+    gap: 24px;
+    border-bottom: 1px solid var(--paper-dim);
+    margin-bottom: 28px;
+  }
+  .tab {
+    background: none;
+    border: none;
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-dim-on-paper);
+    padding: 0 0 12px;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transform: translateY(1px);
+  }
+  .tab.active {
+    color: var(--text-on-paper);
+    border-bottom-color: var(--mint-dim);
+  }
+  .tab:focus-visible, button:focus-visible, input:focus-visible {
+    outline: 2px solid var(--mint-dim);
+    outline-offset: 2px;
+  }
+
+  .view { display: none; flex-direction: column; gap: 16px; }
+  .view.active { display: flex; }
+
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label {
+    font-size: 0.78rem;
+    color: var(--text-dim-on-paper);
+  }
+  .field input {
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    padding: 10px 2px;
+    border: none;
+    border-bottom: 1px solid var(--paper-dim);
+    background: transparent;
+    color: var(--text-on-paper);
+  }
+  .field input:focus {
+    border-bottom-color: var(--mint-dim);
+  }
+  .hint { font-size: 0.72rem; color: var(--text-dim-on-paper); margin-top: -8px; }
+
+  .btn {
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 0.9rem;
+    padding: 12px 18px;
+    border-radius: var(--radius);
+    border: none;
+    cursor: pointer;
+    margin-top: 6px;
+  }
+  .btn-primary { background: var(--ink); color: var(--text-on-dark); }
+  .btn-primary:hover { background: #050810; }
+  .btn-ghost {
+    background: transparent;
+    border: 1px solid var(--paper-dim);
+    color: var(--text-on-paper);
+  }
+  .btn-ghost:hover { border-color: var(--text-dim-on-paper); }
+  .btn-danger { background: transparent; color: var(--rust); border: 1px solid var(--rust); }
+
+  .status {
+    font-size: 0.82rem;
+    padding: 10px 12px;
+    border-radius: var(--radius);
+    display: none;
+  }
+  .status.show { display: block; }
+  .status.ok { background: rgba(79,209,165,0.12); color: var(--mint-dim); }
+  .status.err { background: rgba(226,102,91,0.1); color: var(--rust); }
+
+  .divider { height: 1px; background: var(--paper-dim); margin: 4px 0 8px; }
+
+  .row { display: flex; gap: 12px; }
+  .row > * { flex: 1; }
+
+  .dash-head { display: flex; align-items: center; justify-content: space-between; }
+  .dash-head h2 { font-family: var(--font-display); font-size: 1.2rem; margin: 0; }
+  .badge {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    padding: 3px 8px;
+    border-radius: 20px;
+    border: 1px solid var(--paper-dim);
+    color: var(--text-dim-on-paper);
+  }
+  .badge.on { color: var(--mint-dim); border-color: var(--mint-dim); }
+
+  .qr-wrap {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    padding: 16px;
+    background: #fff;
+    border: 1px solid var(--paper-dim);
+    border-radius: var(--radius);
+  }
+  .qr-wrap img { width: 108px; height: 108px; }
+  .qr-wrap .key { font-family: var(--font-mono); font-size: 0.72rem; word-break: break-all; color: var(--text-dim-on-paper); }
+</style>
+</head>
+<body>
+
+<main class="card" role="main">
+  <!-- Left identity panel -->
+  <aside class="aside">
+    <div>
+      <svg class="seal" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <circle cx="28" cy="28" r="24" stroke-width="1.4"/>
+        <path d="M20 27v-5a8 8 0 0116 0v5" stroke-width="1.6" stroke-linecap="round"/>
+        <rect x="17" y="27" width="22" height="15" rx="1.5" stroke-width="1.6"/>
+        <circle cx="28" cy="34" r="2" fill="#4FD1A5" stroke="none"/>
+      </svg>
+      <h1>Every session starts with proof, not trust.</h1>
+      <p>Passwords are hashed, never stored in the open. Sessions live server-side. A second factor is one toggle away.</p>
+      <ul class="checklist">
+        <li>Bcrypt-hashed credentials</li>
+        <li>Rate-limited sign-in attempts</li>
+        <li>Optional TOTP verification</li>
+      </ul>
+    </div>
+    <span class="session-tag" id="session-tag"><span class="dot"></span><span id="session-tag-text">no active session</span></span>
+  </aside>
+
+  <!-- Right form panel -->
+  <section class="main">
+
+    <!-- Auth tabs (register/login) -->
+    <div id="auth-block">
+      <div class="tabs" role="tablist">
+        <button class="tab active" role="tab" id="tab-login" onclick="switchTab('login')">Sign in</button>
+        <button class="tab" role="tab" id="tab-register" onclick="switchTab('register')">Create account</button>
+      </div>
+
+      <!-- Login -->
+      <form class="view active" id="view-login" onsubmit="return handleLogin(event)">
+        <div class="field">
+          <label for="login-username">Username</label>
+          <input id="login-username" name="username" autocomplete="username" required />
+        </div>
+        <div class="field">
+          <label for="login-password">Password</label>
+          <input id="login-password" name="password" type="password" autocomplete="current-password" required />
+        </div>
+        <button class="btn btn-primary" type="submit">Sign in</button>
+        <div class="status" id="login-status"></div>
+      </form>
+
+      <!-- Login: 2FA challenge -->
+      <form class="view" id="view-login-2fa" onsubmit="return handleLogin2FA(event)">
+        <p class="hint" style="margin-top:0;">Enter the 6-digit code from your authenticator app.</p>
+        <div class="field">
+          <label for="login-2fa-token">Authentication code</label>
+          <input id="login-2fa-token" inputmode="numeric" maxlength="6" required />
+        </div>
+        <button class="btn btn-primary" type="submit">Verify and continue</button>
+        <button class="btn btn-ghost" type="button" onclick="switchTab('login')">Back</button>
+        <div class="status" id="login-2fa-status"></div>
+      </form>
+
+      <!-- Register -->
+      <form class="view" id="view-register" onsubmit="return handleRegister(event)">
+        <div class="field">
+          <label for="reg-username">Username</label>
+          <input id="reg-username" autocomplete="username" required minlength="3" maxlength="30" pattern="[a-zA-Z0-9_]+" />
+        </div>
+        <div class="field">
+          <label for="reg-email">Email</label>
+          <input id="reg-email" type="email" autocomplete="email" required />
+        </div>
+        <div class="field">
+          <label for="reg-password">Password</label>
+          <input id="reg-password" type="password" autocomplete="new-password" required minlength="10" />
+          <span class="hint">10+ characters, with upper, lower, number, and symbol.</span>
+        </div>
+        <button class="btn btn-primary" type="submit">Create account</button>
+        <div class="status" id="register-status"></div>
+      </form>
+    </div>
+
+    <!-- Dashboard (post-login) -->
+    <div class="view" id="view-dashboard">
+      <div class="dash-head">
+        <h2 id="dash-username">Welcome back</h2>
+        <span class="badge" id="tfa-badge">2FA off</span>
+      </div>
+      <div class="divider"></div>
+
+      <div id="tfa-setup-prompt">
+        <p class="hint" style="margin-top:0;">Add a second factor so a password alone can't unlock your account.</p>
+        <button class="btn btn-ghost" onclick="startEnroll2FA()">Enable 2FA</button>
+      </div>
+
+      <div id="tfa-enroll" style="display:none;">
+        <p class="hint" style="margin-top:0;">Scan with an authenticator app, then confirm with a code.</p>
+        <div class="qr-wrap">
+          <img id="qr-img" alt="2FA QR code" />
+          <div class="key">
+            <div id="qr-key"></div>
+          </div>
+        </div>
+        <div class="field" style="margin-top:12px;">
+          <label for="enroll-token">Confirmation code</label>
+          <input id="enroll-token" inputmode="numeric" maxlength="6" />
+        </div>
+        <div class="row">
+          <button class="btn btn-primary" onclick="confirmEnroll2FA()">Confirm</button>
+          <button class="btn btn-ghost" onclick="cancelEnroll2FA()">Cancel</button>
+        </div>
+      </div>
+
+      <div id="tfa-enabled-block" style="display:none;">
+        <p class="hint" style="margin-top:0;">Two-factor authentication is protecting this account.</p>
+        <button class="btn btn-danger" onclick="disable2FA()">Turn off 2FA</button>
+      </div>
+
+      <div class="status" id="dash-status"></div>
+      <div class="divider"></div>
+      <button class="btn btn-ghost" onclick="logout()">Sign out</button>
+    </div>
+
+  </section>
+</main>
+
+<script>
+const API = '/api/auth';
+let pendingLoginUsername = '';
+
+function switchTab(name) {
+  document.getElementById('tab-login').classList.toggle('active', name === 'login');
+  document.getElementById('tab-register').classList.toggle('active', name === 'register');
+  document.getElementById('view-login').classList.toggle('active', name === 'login');
+  document.getElementById('view-register').classList.toggle('active', name === 'register');
+  document.getElementById('view-login-2fa').classList.remove('active');
+}
+
+function setStatus(id, ok, text) {
+  const el = document.getElementById(id);
+  el.textContent = text;
+  el.className = 'status show ' + (ok ? 'ok' : 'err');
+}
+
+async function api(path, body, method = 'POST') {
+  const res = await fetch(API + path, {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: method === 'GET' ? undefined : JSON.stringify(body || {})
+  });
+  let data = {};
+  try { data = await res.json(); } catch (e) {}
+  return { ok: res.ok, data };
+}
+
+async function handleRegister(e) {
+  e.preventDefault();
+  const { ok, data } = await api('/register', {
+    username: document.getElementById('reg-username').value,
+    email: document.getElementById('reg-email').value,
+    password: document.getElementById('reg-password').value
+  });
+  setStatus('register-status', ok, ok ? data.message : (data.errors ? data.errors.map(x => x.msg).join(' · ') : data.error));
+  if (ok) setTimeout(() => switchTab('login'), 900);
+  return false;
+}
+
+async function handleLogin(e) {
+  e.preventDefault();
+  const username = document.getElementById('login-username').value;
+  const { ok, data } = await api('/login', {
+    username,
+    password: document.getElementById('login-password').value
+  });
+  if (ok && data.twoFactorRequired) {
+    pendingLoginUsername = username;
+    document.getElementById('view-login').classList.remove('active');
+    document.getElementById('view-login-2fa').classList.add('active');
+    return false;
+  }
+  setStatus('login-status', ok, ok ? data.message : data.error);
+  if (ok) enterDashboard(username);
+  return false;
+}
+
+async function handleLogin2FA(e) {
+  e.preventDefault();
+  const { ok, data } = await api('/login/2fa', { token: document.getElementById('login-2fa-token').value });
+  setStatus('login-2fa-status', ok, ok ? data.message : data.error);
+  if (ok) enterDashboard(pendingLoginUsername);
+  return false;
+}
+
+function enterDashboard(username) {
+  document.getElementById('auth-block').style.display = 'none';
+  document.getElementById('view-dashboard').classList.add('active');
+  document.getElementById('session-tag').classList.add('live');
+  document.getElementById('session-tag-text').textContent = 'session active';
+  document.getElementById('dash-username').textContent = 'Welcome, ' + username;
+  refreshMe();
+}
+
+async function refreshMe() {
+  const { ok, data } = await api('/me', null, 'GET');
+  if (!ok) return;
+  const enabled = data.user.twoFactorEnabled;
+  document.getElementById('tfa-badge').textContent = enabled ? '2FA on' : '2FA off';
+  document.getElementById('tfa-badge').classList.toggle('on', enabled);
+  document.getElementById('tfa-setup-prompt').style.display = enabled ? 'none' : 'block';
+  document.getElementById('tfa-enabled-block').style.display = enabled ? 'block' : 'none';
+  document.getElementById('tfa-enroll').style.display = 'none';
+}
+
+async function startEnroll2FA() {
+  const { ok, data } = await api('/2fa/setup');
+  if (!ok) return setStatus('dash-status', false, data.error);
+  document.getElementById('qr-img').src = data.qrCode;
+  document.getElementById('qr-key').textContent = data.manualEntryKey;
+  document.getElementById('tfa-setup-prompt').style.display = 'none';
+  document.getElementById('tfa-enroll').style.display = 'block';
+}
+
+function cancelEnroll2FA() {
+  document.getElementById('tfa-enroll').style.display = 'none';
+  document.getElementById('tfa-setup-prompt').style.display = 'block';
+}
+
+async function confirmEnroll2FA() {
+  const { ok, data } = await api('/2fa/verify-setup', { token: document.getElementById('enroll-token').value });
+  setStatus('dash-status', ok, ok ? data.message : data.error);
+  if (ok) refreshMe();
+}
+
+async function disable2FA() {
+  const { ok, data } = await api('/2fa/disable');
+  setStatus('dash-status', ok, ok ? data.message : data.error);
+  if (ok) refreshMe();
+}
+
+async function logout() {
+  await api('/logout');
+  document.getElementById('view-dashboard').classList.remove('active');
+  document.getElementById('auth-block').style.display = 'block';
+  document.getElementById('session-tag').classList.remove('live');
+  document.getElementById('session-tag-text').textContent = 'no active session';
+  document.getElementById('dash-status').className = 'status';
+  switchTab('login');
+}
+</script>
+</body>
+</html>
